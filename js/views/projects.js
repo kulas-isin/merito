@@ -47,7 +47,7 @@ const ViewProjects = (function(){
 
     const totals=rows.reduce(function(a,p){
       const e=Store.projectEconomics(p);
-      a.amount+=e.amount; a.cost+=e.cost; a.hours+=U.num(p.hours);
+      a.amount+=e.effective; a.cost+=e.cost; a.hours+=U.num(p.hours);
       return a;
     },{amount:0,cost:0,hours:0});
 
@@ -61,7 +61,8 @@ const ViewProjects = (function(){
             (p.note?'<div class="small muted">'+U.esc(p.note)+'</div>':'')+'</td>'+
           '<td class="small">'+U.esc(Store.clientName(p.clientId))+'</td>'+
           '<td>'+UI.pill(UI.STAGES,p.stage)+'</td>'+
-          '<td class="num">'+U.money(e.amount)+'</td>'+
+          '<td class="num">'+U.money(e.effective)+
+            (e.added? '<div class="small muted">原 '+U.money0(e.amount)+' ＋異動 '+U.money0(e.added)+'</div>':'')+'</td>'+
           '<td class="num">'+(U.num(p.hours)?U.num(p.hours).toLocaleString():'—')+'</td>'+
           '<td class="num">'+U.money(p.rate)+'</td>'+
           '<td class="num">'+U.money(e.cost)+'</td>'+
@@ -69,6 +70,7 @@ const ViewProjects = (function(){
             (e.hasBoth? U.money0(e.margin)+'<div class="small">'+(e.pct>0?'+':'')+e.pct+'%</div>' : '—')+'</td>'+
           '<td class="small muted">'+U.esc(p.owner||'—')+'</td>'+
           '<td class="tight">'+
+            '<button class="linkbtn" data-act="change" data-id="'+U.esc(p.id)+'">＋異動</button>'+
             '<button class="linkbtn" data-act="hours" data-id="'+U.esc(p.id)+'">記工時</button>'+
             '<button class="linkbtn" data-act="edit" data-id="'+U.esc(p.id)+'">編輯</button>'+
             '<button class="linkbtn" data-act="del" data-id="'+U.esc(p.id)+'">刪除</button>'+
@@ -85,6 +87,12 @@ const ViewProjects = (function(){
 
     U.$$('[data-act="edit"]',box).forEach(function(b){
       b.onclick=function(){ edit(Store.get('projects',b.dataset.id)); };
+    });
+    U.$$('[data-act="change"]',box).forEach(function(b){
+      b.onclick=function(){
+        const p=Store.get('projects',b.dataset.id);
+        ViewChanges.quickAdd(p.clientId,p.id);
+      };
     });
     U.$$('[data-act="hours"]',box).forEach(function(b){
       b.onclick=function(){ addHours(Store.get('projects',b.dataset.id)); };
@@ -147,12 +155,12 @@ const ViewProjects = (function(){
   }
 
   function exportCSV(){
-    const rows=[['專案','客戶','階段','合約金額','工時','時薪','投入成本','損益','毛利率%','負責人','開始日','註記']];
+    const rows=[['專案','客戶','階段','原合約金額','已確認異動','合約含異動','工時','時薪','投入成本','損益','毛利率%','負責人','開始日','註記']];
     Store.list('projects').forEach(function(p){
       const e=Store.projectEconomics(p);
       rows.push([p.name,Store.clientName(p.clientId),UI.lookup(UI.STAGES,p.stage).l,
-        e.amount,U.num(p.hours),U.num(p.rate),e.cost,e.margin,e.pct==null?'':e.pct,
-        p.owner||'',p.startDate||'',p.note||'']);
+        e.amount,e.added,e.effective,U.num(p.hours),U.num(p.rate),e.cost,e.margin,
+        e.pct==null?'':e.pct,p.owner||'',p.startDate||'',p.note||'']);
     });
     U.download('merito-projects-'+U.today()+'.csv','﻿'+U.toCSV(rows),'text/csv;charset=utf-8');
   }

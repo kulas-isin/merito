@@ -159,6 +159,106 @@ const UI = (function(){
   ];
   const LESSON_TYPES=['伸手牌（只索取不給予）','難搞高付費','互惠好客戶','低預算好配合','需求反覆型','想學走／換團隊型','其他'];
 
+  /* 需求異動的處理狀態。順序就是實際的流程順序，回報時照這個排。 */
+  const CHANGE_STATUS=[
+    {v:'pending',l:'待評估',pill:'grey'},
+    {v:'quoted',l:'已報價待確認',pill:'amber'},
+    {v:'confirmed',l:'客戶已確認',pill:'green'},
+    {v:'doing',l:'開發中',pill:'blue'},
+    {v:'done',l:'已完成',pill:'blue'},
+    {v:'absorbed',l:'免費吸收',pill:'red'},
+    {v:'rejected',l:'客戶不做',pill:'grey'}
+  ];
+  const CHANGE_VIA=['LINE','會議','Email','電話','當面','其他'];
+
+  /* 已確認且有報價 → 這筆錢算得到 */
+  function changeCountsAsIncome(c){
+    return (c.status==='confirmed'||c.status==='done') && U.num(c.amount)>0;
+  }
+
+  /* ── 給客戶的確認訊息 ──
+     重點是把「做什麼、加多少錢、加多久、要你回覆確認」寫在同一段，
+     對方回一句「確認」就是白紙黑字。 */
+  function confirmText(c){
+    const proj=Store.get('projects',c.projectId);
+    const lines=[];
+    lines.push('【需求異動確認】'+(proj?'　'+proj.name:''));
+    lines.push('客戶：'+Store.clientName(c.clientId));
+    lines.push('日期：'+U.dateStr(c.date));
+    lines.push('');
+    lines.push('異動內容：');
+    lines.push(c.title||'');
+    if(c.detail) lines.push(c.detail);
+    lines.push('');
+    if(U.num(c.hours)) lines.push('預估追加工時：'+U.num(c.hours)+' 小時');
+    if(U.num(c.amount)) lines.push('報價金額：NT$ '+U.money0(c.amount));
+    else lines.push('報價金額：不另計費（本次吸收）');
+    if(c.impact) lines.push('對時程的影響：'+c.impact);
+    lines.push('');
+    lines.push('以上如確認無誤，請直接回覆「確認」，我們會排入開發。');
+    if(U.num(c.amount)) lines.push('確認後此金額併入合約，付款條件同原合約。');
+    return lines.join('\n');
+  }
+
+  /* ── 處理狀態回報 ──
+     給一批異動，產出可以直接貼給客戶或貼進週報的進度表。 */
+  function statusReport(changes,title){
+    const lines=[];
+    lines.push('【需求異動處理狀態】'+(title?'　'+title:''));
+    lines.push('產出日期：'+U.today());
+    lines.push('');
+    let quoted=0, confirmed=0, free=0;
+    CHANGE_STATUS.forEach(function(st){
+      const group=changes.filter(function(c){ return c.status===st.v; });
+      if(!group.length) return;
+      lines.push('■ '+st.l+'（'+group.length+' 項）');
+      group.forEach(function(c){
+        const bits=[];
+        if(U.num(c.amount)) bits.push('NT$ '+U.money0(c.amount));
+        if(U.num(c.hours)) bits.push(U.num(c.hours)+' 小時');
+        if(c.confirmedAt) bits.push('確認於 '+U.dateStr(c.confirmedAt)+(c.confirmedBy?'／'+c.confirmedBy:''));
+        lines.push('  ・'+(c.title||'（未命名）')+(bits.length?'（'+bits.join('、')+'）':''));
+        if(st.v==='quoted') quoted+=U.num(c.amount);
+        if(st.v==='confirmed'||st.v==='done') confirmed+=U.num(c.amount);
+        if(st.v==='absorbed') free+=U.num(c.hours);
+      });
+      lines.push('');
+    });
+    lines.push('———');
+    lines.push('已確認追加金額：NT$ '+U.money0(confirmed));
+    if(quoted) lines.push('待客戶確認金額：NT$ '+U.money0(quoted));
+    if(free) lines.push('本次免費吸收工時：'+free+' 小時');
+    return lines.join('\n');
+  }
+
+  /* 顯示一段可複製的文字。clipboard 在 file:// 下常被擋，
+     所以一律附上全選好的文字框當退路。 */
+  function textModal(title,sub,text){
+    const box=openModal(
+      '<h3>'+U.esc(title)+'</h3>'+
+      (sub?'<div class="msub">'+U.esc(sub)+'</div>':'')+
+      '<div class="field"><textarea id="copyBox" rows="14" style="font-size:14px;line-height:1.6">'+U.esc(text)+'</textarea></div>'+
+      '<div class="btn-row">'+
+        '<button class="act ghost" data-act="close">關閉</button>'+
+        '<button class="act" data-act="copy">複製</button>'+
+      '</div>');
+    const ta=box.querySelector('#copyBox');
+    ta.focus(); ta.select();
+    box.querySelector('[data-act="close"]').onclick=closeModal;
+    box.querySelector('[data-act="copy"]').onclick=function(){
+      ta.select();
+      const done=function(){ toast('已複製，貼給客戶吧'); };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(ta.value).then(done,function(){
+          toast('瀏覽器不給自動複製，文字已全選，請按 Ctrl/Cmd + C',true);
+        });
+      }else{
+        toast('文字已全選，請按 Ctrl/Cmd + C');
+      }
+    };
+    return box;
+  }
+
   function lookup(listArr,v){
     return listArr.find(function(x){ return x.v===v; }) || listArr[0];
   }
@@ -191,6 +291,8 @@ const UI = (function(){
   return {toast:toast,openModal:openModal,closeModal:closeModal,form:form,confirm:confirm,
     CRITERIA:CRITERIA,MAX_SCORE:MAX_SCORE,verdictOf:verdictOf,
     CLIENT_STATUS:CLIENT_STATUS,STAGES:STAGES,QUOTE_STATUS:QUOTE_STATUS,LESSON_TYPES:LESSON_TYPES,
+    CHANGE_STATUS:CHANGE_STATUS,CHANGE_VIA:CHANGE_VIA,changeCountsAsIncome:changeCountsAsIncome,
+    confirmText:confirmText,statusReport:statusReport,textModal:textModal,
     lookup:lookup,pill:pill,options:options,clientOptions:clientOptions,projectOptions:projectOptions,
     memberOptions:memberOptions,emptyBox:emptyBox};
 })();

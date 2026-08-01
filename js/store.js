@@ -12,7 +12,7 @@ const Store = (function(){
   const LS_CFG='merito_cfg_v1';
   const SCHEMA=2;
 
-  const COLLECTIONS=['clients','contacts','assessments','projects','quotes','payments','lessons','activities','members'];
+  const COLLECTIONS=['clients','contacts','assessments','projects','changes','quotes','payments','lessons','activities','members'];
 
   function emptyData(){
     const d={schema:SCHEMA,updatedAt:null,updatedBy:null};
@@ -154,19 +154,33 @@ const Store = (function(){
     return list(coll).filter(function(r){ return r.clientId===clientId; });
   }
 
-  /* 專案損益：合約 - 工時×時薪 */
+  /* 已確認、而且有報價的需求異動，算成這個專案的追加收入。
+     異動的「預估工時」不進成本 —— 實際做掉的時數本來就會記進專案工時，
+     兩邊都算會重複計算。 */
+  function changeIncome(projectId){
+    if(!projectId) return 0;
+    return U.sum(list('changes').filter(function(c){
+      return c.projectId===projectId && (c.status==='confirmed'||c.status==='done');
+    }),function(c){ return c.amount; });
+  }
+
+  /* 專案損益：（原合約 + 已確認異動）- 工時×時薪 */
   function projectEconomics(p){
     const amount=U.num(p.amount);
+    const added=changeIncome(p.id);
+    const effective=amount+added;
     const cost=U.num(p.hours)*U.num(p.rate);
-    const margin=amount-cost;
-    const pct=amount>0? Math.round(margin/amount*100) : null;
-    return {amount:amount,cost:cost,margin:margin,pct:pct,hasBoth:amount>0&&cost>0};
+    const margin=effective-cost;
+    const pct=effective>0? Math.round(margin/effective*100) : null;
+    return {amount:amount,added:added,effective:effective,cost:cost,
+      margin:margin,pct:pct,hasBoth:effective>0&&cost>0};
   }
   /* 客戶總覽數字 */
   function clientSummary(clientId){
     const projects=ofClient('projects',clientId);
     const payments=ofClient('payments',clientId);
-    const contracted=U.sum(projects,function(p){return p.amount;});
+    const changes=U.sortBy(ofClient('changes',clientId),function(c){return c.date||'';},true);
+    const contracted=U.sum(projects,function(p){return projectEconomics(p).effective;});
     const cost=U.sum(projects,function(p){return U.num(p.hours)*U.num(p.rate);});
     const received=U.sum(payments.filter(function(x){return x.paidDate;}),function(x){return x.amount;});
     const outstanding=U.sum(payments.filter(function(x){return !x.paidDate;}),function(x){return x.amount;});
@@ -174,7 +188,9 @@ const Store = (function(){
       return !x.paidDate && x.dueDate && U.daysFromToday(x.dueDate)<0;
     });
     const assessments=U.sortBy(ofClient('assessments',clientId),function(a){return a.date||'';},true);
-    return {projects:projects,payments:payments,contracted:contracted,cost:cost,
+    return {projects:projects,payments:payments,changes:changes,
+      pendingChanges:changes.filter(function(c){ return c.status==='pending'||c.status==='quoted'; }),
+      contracted:contracted,cost:cost,
       margin:contracted-cost,received:received,outstanding:outstanding,
       overdue:overdue,overdueAmount:U.sum(overdue,function(x){return x.amount;}),
       latestAssessment:assessments[0]||null,assessments:assessments};
@@ -352,7 +368,8 @@ const Store = (function(){
     return JSON.stringify(state.data,null,2);
   }
   const COLL_LABELS={clients:'客戶',contacts:'聯絡人',assessments:'評估記錄',projects:'專案',
-    quotes:'報價單',payments:'收款里程碑',lessons:'經驗記錄',activities:'動態記錄',members:'團隊成員'};
+    changes:'需求異動',quotes:'報價單',payments:'收款里程碑',lessons:'經驗記錄',
+    activities:'動態記錄',members:'團隊成員'};
 
   /* 匯入前的體檢：算出會新增／更新幾筆，並把會靜默出錯的地方挑出來。
      AI 產的 JSON 常常缺 id 或缺 updatedAt，那兩種錯誤匯入後不會報錯、
@@ -418,7 +435,7 @@ const Store = (function(){
     subscribe:subscribe, emit:emit, init:init,
     list:list, get:get, upsert:upsert, remove:remove, logActivity:logActivity,
     findClientByName:findClientByName, clientName:clientName, ofClient:ofClient,
-    projectEconomics:projectEconomics, clientSummary:clientSummary,
+    projectEconomics:projectEconomics, changeIncome:changeIncome, clientSummary:clientSummary,
     setCfg:setCfg, syncConfigured:syncConfigured,
     pull:pull, push:push, sync:sync, checkRepoVisibility:checkRepoVisibility,
     exportJSON:exportJSON, importJSON:importJSON, analyzeImport:analyzeImport, saveLocal:saveLocal

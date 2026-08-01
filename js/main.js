@@ -6,6 +6,7 @@ const Main = (function(){
     clients:ViewClients,
     assess:ViewAssess,
     projects:ViewProjects,
+    changes:ViewChanges,
     finance:ViewFinance,
     lessons:ViewLessons,
     settings:ViewSettings

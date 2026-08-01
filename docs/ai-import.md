@@ -7,6 +7,8 @@
 
 - 一次把過去半年的客戶對話整理成客戶檔案與聯絡人
 - 從對話裡抓出「講好的金額、答應的交期、追加的需求」變成專案與收款里程碑
+- **把散在 LINE 裡的「順便改一下」全部撈成需求異動記錄** —— 這是最值得做的一項，
+  因為那些對話當下沒人記，事後又最容易吵。撈出來之後逐筆補報價、發確認訊息
 - 把吵過的架、踩過的雷整理成經驗記錄
 - 依對話裡的態度給出接案評估的初步分數（**只能當草稿，最後要人工確認**）
 
@@ -96,6 +98,24 @@
     "rate": "時薪成本，不知道就留空",
     "startDate": "YYYY-MM-DD",
     "note": "待報價的新需求、風險",
+    "updatedAt": "ISO 時間", "updatedBy": "AI 匯入"
+  }],
+  "changes": [{
+    "id": "ai-ch1",
+    "clientId": "ai-c1",
+    "projectId": "ai-p1",
+    "title": "一句話講清楚客戶要改什麼",
+    "detail": "對方原話、範圍到哪為止、不包含什麼",
+    "date": "提出日期 YYYY-MM-DD",
+    "requestedBy": "誰提的",
+    "via": "LINE | 會議 | Email | 電話 | 當面 | 其他",
+    "status": "pending 待評估 | quoted 已報價待確認 | confirmed 客戶已確認 | doing 開發中 | done 已完成 | absorbed 免費吸收 | rejected 客戶不做",
+    "hours": "預估追加工時，純數字字串",
+    "amount": "報價金額；對話裡說不另外收費就留空字串",
+    "impact": "對時程的影響",
+    "confirmedAt": "客戶確認的日期，還沒確認就留空",
+    "confirmedBy": "誰確認的",
+    "note": "內部備註，不會出現在給客戶的訊息裡",
     "updatedAt": "ISO 時間", "updatedBy": "AI 匯入"
   }],
   "quotes": [{

@@ -210,6 +210,32 @@ const ViewClients = (function(){
         }).join('')+'</tbody></table></div>'
         : UI.emptyBox('還沒有專案。'))+
 
+      /* 需求異動 */
+      '<h3 class="blk">需求異動</h3>'+
+      (s.changes.length?
+        '<div class="table-scroll"><table><thead><tr><th>日期</th><th>異動內容</th><th>工時</th><th>報價</th><th>狀態</th><th>確認</th></tr></thead><tbody>'+
+        s.changes.map(function(ch){
+          const st=UI.lookup(UI.CHANGE_STATUS,ch.status);
+          return '<tr><td class="small muted nowrap">'+U.dateStr(ch.date)+'</td>'+
+            '<td><strong>'+U.esc(ch.title)+'</strong>'+
+              (ch.requestedBy?'<div class="small muted">'+U.esc(ch.requestedBy)+
+                (ch.via?'（'+U.esc(ch.via)+'）':'')+'</div>':'')+'</td>'+
+            '<td class="num">'+(U.num(ch.hours)||'—')+'</td>'+
+            '<td class="num">'+(U.num(ch.amount)?U.money(ch.amount)
+              :'<span class="muted">'+(ch.status==='pending'?'未報價':'不計費')+'</span>')+'</td>'+
+            '<td><span class="pill '+st.pill+'">'+U.esc(st.l)+'</span></td>'+
+            '<td class="small muted">'+(ch.confirmedAt?U.dateStr(ch.confirmedAt):'—')+'</td></tr>';
+        }).join('')+'</tbody></table></div>'
+        : UI.emptyBox('還沒有需求異動記錄。'))+
+      '<div class="btn-row" style="margin-top:10px">'+
+        '<button class="act ghost sm" data-act="new-change">＋ 記一筆異動</button>'+
+        (s.changes.length? '<button class="act ghost sm" data-act="change-report">處理狀態回報</button>'+
+          '<button class="act ghost sm" data-act="change-export">匯出 Excel</button>' : '')+
+      '</div>'+
+      (s.pendingChanges.length? '<div class="warnbox" style="margin-top:12px">有 '+
+        s.pendingChanges.length+' 筆異動還沒結案（待評估或等客戶確認）。'+
+        '做之前先確認，不然做完很難收錢。</div>' : '')+
+
       /* 報價與收款 */
       '<h3 class="blk">報價與收款</h3>'+
       (quotes.length?
@@ -273,6 +299,16 @@ const ViewClients = (function(){
     el.querySelector('[data-act="go-assess"]').onclick=function(){
       ViewAssess.startFor(c.id);
     };
+    el.querySelector('[data-act="new-change"]').onclick=function(){
+      ViewChanges.quickAdd(c.id,'');
+    };
+    const chRep=el.querySelector('[data-act="change-report"]');
+    if(chRep) chRep.onclick=function(){
+      UI.textModal('處理狀態回報 — '+c.name,'可直接貼進 LINE、Email 或週報。',
+        UI.statusReport(Store.ofClient('changes',c.id),c.name));
+    };
+    const chExp=el.querySelector('[data-act="change-export"]');
+    if(chExp) chExp.onclick=function(){ ViewChanges.exportFor(c.id); };
     U.$$('[data-act="edit-contact"]',el).forEach(function(b){
       b.onclick=function(){ editContact(Store.get('contacts',b.dataset.id),c.id); };
     });

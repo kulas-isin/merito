@@ -23,6 +23,12 @@ const ViewDashboard = (function(){
 
     const openQuotes=quotes.filter(function(q){ return q.status==='sent'; });
 
+    const changes=Store.list('changes');
+    const chPending=changes.filter(function(c){ return c.status==='pending'; });
+    const chWaiting=changes.filter(function(c){ return c.status==='quoted'; });
+    const chAbsorbed=U.sum(changes.filter(function(c){ return c.status==='absorbed'; }),
+      function(c){ return c.hours; });
+
     /* 燒錢中的專案：有合約也有投入、且已經虧 */
     const bleeding=U.sortBy(projects.map(function(p){
       return Object.assign({p:p},Store.projectEconomics(p));
@@ -51,6 +57,16 @@ const ViewDashboard = (function(){
       (openQuotes.length? '<div class="infobox">有 '+openQuotes.length+' 張報價單已送出還沒回覆，合計 '+
         U.money0(U.sum(openQuotes,function(q){return q.amount;}))+' — 記得追。</div>' : '')+
 
+      (chPending.length||chWaiting.length||chAbsorbed
+        ? '<div class="infobox">需求異動：'+
+          [chPending.length? chPending.length+' 筆待評估報價':'',
+           chWaiting.length? chWaiting.length+' 筆等客戶確認（'+
+             U.money0(U.sum(chWaiting,function(c){return c.amount;}))+'）':'',
+           chAbsorbed? '已免費吸收 '+chAbsorbed+' 小時':''
+          ].filter(Boolean).join('　·　')+
+          '　<button class="linkbtn" data-act="go-changes" style="font-size:13px">前往處理 →</button></div>'
+        : '')+
+
       '<div class="two-col">'+
         '<div>'+
           '<h3 class="blk">燒錢中的專案</h3>'+
@@ -59,7 +75,8 @@ const ViewDashboard = (function(){
             bleeding.slice(0,8).map(function(x){
               return '<tr><td><strong>'+U.esc(x.p.name)+'</strong></td>'+
                 '<td class="small muted">'+U.esc(Store.clientName(x.p.clientId))+'</td>'+
-                '<td class="num">'+U.money(x.amount)+'</td>'+
+                '<td class="num">'+U.money(x.effective)+
+                  (x.added? '<div class="small muted">含異動 +'+U.money0(x.added)+'</div>':'')+'</td>'+
                 '<td class="num">'+U.money(x.cost)+'</td>'+
                 '<td class="num neg">'+U.money0(x.margin)+'（'+x.pct+'%）</td></tr>';
             }).join('')+'</tbody></table></div>'
@@ -85,6 +102,9 @@ const ViewDashboard = (function(){
           renderFeed()+
         '</div>'+
       '</div>';
+
+    const goCh=el.querySelector('[data-act="go-changes"]');
+    if(goCh) goCh.onclick=function(){ Main.go('changes'); };
   }
 
   function kpi(k,v,s,cls){
