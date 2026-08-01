@@ -351,6 +351,54 @@ const Store = (function(){
   function exportJSON(){
     return JSON.stringify(state.data,null,2);
   }
+  const COLL_LABELS={clients:'客戶',contacts:'聯絡人',assessments:'評估記錄',projects:'專案',
+    quotes:'報價單',payments:'收款里程碑',lessons:'經驗記錄',activities:'動態記錄',members:'團隊成員'};
+
+  /* 匯入前的體檢：算出會新增／更新幾筆，並把會靜默出錯的地方挑出來。
+     AI 產的 JSON 常常缺 id 或缺 updatedAt，那兩種錯誤匯入後不會報錯、
+     只是資料默默沒進來，所以一定要在匯入前講清楚。 */
+  function analyzeImport(text){
+    let parsed;
+    try{ parsed=JSON.parse(text); }
+    catch(e){ return {ok:false,error:'不是有效的 JSON：'+e.message}; }
+    if(!parsed || typeof parsed!=='object' || Array.isArray(parsed))
+      return {ok:false,error:'最外層必須是一個物件，也就是用 { } 包起來'};
+
+    const present=COLLECTIONS.filter(function(c){ return Array.isArray(parsed[c]) && parsed[c].length; });
+    if(!present.length)
+      return {ok:false,error:'找不到任何可辨識的資料區塊（clients、projects、payments…）'};
+
+    const stats=[], warnings=[];
+    let noId=0, noStamp=0;
+    const unknownClients={};
+    /* 這批 JSON 自己帶的客戶 id，用來判斷 clientId 是不是至少在同一批裡找得到 */
+    const batchClientIds={};
+    (parsed.clients||[]).forEach(function(r){ if(r&&r.id) batchClientIds[r.id]=true; });
+
+    present.forEach(function(coll){
+      let add=0, upd=0, drop=0;
+      parsed[coll].forEach(function(r){
+        if(!r || !r.id){ drop++; noId++; return; }
+        const existing=(state.data[coll]||[]).some(function(x){ return x.id===r.id; });
+        if(existing) upd++; else add++;
+        if(!r.updatedAt) noStamp++;
+        if(r.clientId && !batchClientIds[r.clientId] && !get('clients',r.clientId))
+          unknownClients[r.clientId]=true;
+      });
+      stats.push({coll:coll,label:COLL_LABELS[coll]||coll,add:add,upd:upd,drop:drop});
+      });
+
+    if(noId) warnings.push(noId+' 筆記錄沒有 id，匯入時會被略過（不會進到系統裡）');
+    if(noStamp) warnings.push(noStamp+' 筆記錄沒有 updatedAt。用「合併」時，'+
+      '這些記錄如果和既有資料撞 id，會輸給既有資料而不會生效');
+    const uc=Object.keys(unknownClients);
+    if(uc.length) warnings.push(uc.length+' 個 clientId 在系統和這份 JSON 裡都找不到對應客戶（'+
+      uc.slice(0,3).join('、')+(uc.length>3?' 等':'')+'），這些記錄會變成沒有歸屬的孤兒');
+
+    return {ok:true,stats:stats,warnings:warnings,
+      total:stats.reduce(function(a,s){ return a+s.add+s.upd; },0)};
+  }
+
   function importJSON(text,mode){
     const incoming=normalize(JSON.parse(text));
     state.data = mode==='replace' ? incoming : mergeData(incoming,state.data);
@@ -373,6 +421,6 @@ const Store = (function(){
     projectEconomics:projectEconomics, clientSummary:clientSummary,
     setCfg:setCfg, syncConfigured:syncConfigured,
     pull:pull, push:push, sync:sync, checkRepoVisibility:checkRepoVisibility,
-    exportJSON:exportJSON, importJSON:importJSON, saveLocal:saveLocal
+    exportJSON:exportJSON, importJSON:importJSON, analyzeImport:analyzeImport, saveLocal:saveLocal
   };
 })();

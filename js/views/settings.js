@@ -1,6 +1,10 @@
 /* ═══ 06 設定 ═══ */
 const ViewSettings = (function(){
 
+  /* 貼上的 JSON 與預覽結果留在模組層，這樣背景同步觸發重繪時不會把使用者貼的東西清掉 */
+  let pasted='';
+  let preview=null;
+
   function render(el){
     const c=Store.state.cfg;
     const st=Store.state;
@@ -69,12 +73,28 @@ const ViewSettings = (function(){
         renderMembers()+
       '</div>'+
 
+      '<h3 class="blk">貼上 JSON 匯入</h3>'+
+      '<div class="infobox">'+
+        '請 AI 把對話紀錄整理成 Merito 格式後，回覆的 JSON 直接貼進來就好，不用先存成檔案。'+
+        '欄位規格與可複製的提示詞在 <code>docs/ai-import.md</code>。'+
+        '<br>會先做一次體檢再問你要不要匯入 —— AI 產的 JSON 常缺 id 或 updatedAt，那兩種錯誤匯入後不會報錯，資料只是默默沒進來。'+
+      '</div>'+
+      '<div class="panel">'+
+        '<div class="field"><label>JSON 內容</label>'+
+          '<textarea id="pasteBox" rows="7" placeholder=\'{ "schema": 2, "clients": [ ... ] }\'>'+U.esc(pasted)+'</textarea></div>'+
+        '<div class="btn-row" style="margin-top:12px">'+
+          '<button class="act" data-act="check">檢查並預覽</button>'+
+          '<button class="act ghost" data-act="clear-paste">清空</button>'+
+        '</div>'+
+        renderPreview()+
+      '</div>'+
+
       '<h3 class="blk">備份與轉移</h3>'+
       '<div class="panel">'+
         '<div class="btn-row">'+
           '<button class="act ghost" data-act="export">匯出 JSON 備份</button>'+
-          '<button class="act ghost" data-act="import-merge">匯入（合併）</button>'+
-          '<button class="act ghost" data-act="import-replace">匯入（覆蓋）</button>'+
+          '<button class="act ghost" data-act="import-merge">從檔案匯入（合併）</button>'+
+          '<button class="act ghost" data-act="import-replace">從檔案匯入（覆蓋）</button>'+
           '<button class="act ghost danger" data-act="wipe">清空本機資料</button>'+
         '</div>'+
         '<div class="help" style="margin-top:12px">'+
@@ -96,6 +116,34 @@ const ViewSettings = (function(){
   function labelOf(k){
     return {clients:'客戶',contacts:'聯絡人',assessments:'評估記錄',projects:'專案',
       quotes:'報價單',payments:'收款里程碑',lessons:'經驗記錄',activities:'動態記錄',members:'團隊成員'}[k]||k;
+  }
+
+  function renderPreview(){
+    if(!preview) return '';
+    if(!preview.ok) return '<div class="warnbox" style="margin:16px 0 0">'+U.esc(preview.error)+'</div>';
+    return '<div style="margin-top:18px">'+
+      '<div class="table-scroll"><table><thead><tr><th>區塊</th><th>新增</th><th>更新既有</th><th>會被略過</th></tr></thead><tbody>'+
+        preview.stats.map(function(s){
+          return '<tr><td>'+U.esc(s.label)+'</td>'+
+            '<td class="num">'+(s.add||'—')+'</td>'+
+            '<td class="num">'+(s.upd||'—')+'</td>'+
+            '<td class="num'+(s.drop?' neg':'')+'">'+(s.drop||'—')+'</td></tr>';
+        }).join('')+
+      '</tbody></table></div>'+
+      (preview.warnings.length
+        ? '<div class="warnbox" style="margin-top:14px">'+
+            preview.warnings.map(function(w){ return '▲ '+U.esc(w); }).join('<br>')+
+          '</div>'
+        : '')+
+      '<div class="btn-row" style="margin-top:14px">'+
+        '<button class="act" data-act="do-merge">合併匯入（共 '+preview.total+' 筆）</button>'+
+        '<button class="act ghost danger" data-act="do-replace">改成覆蓋匯入</button>'+
+      '</div>'+
+      '<div class="help" style="margin-top:10px">'+
+        '合併＝只補上新的、更新較新的，沒提到的記錄完全不動。'+
+        '覆蓋＝整份資料換成這段 JSON，現有的東西會不見，除非你很確定否則別用。'+
+      '</div>'+
+    '</div>';
   }
 
   function renderMembers(){
@@ -153,6 +201,31 @@ const ViewSettings = (function(){
       b.onclick=function(){ Store.remove('members',b.dataset.id); UI.toast('已刪除'); };
     });
 
+    /* ── 貼上 JSON 匯入 ── */
+    const box=el.querySelector('#pasteBox');
+    box.oninput=function(){ pasted=box.value; };
+    el.querySelector('[data-act="check"]').onclick=function(){
+      pasted=box.value;
+      if(!pasted.trim()){ box.focus(); UI.toast('請先貼上 JSON',true); return; }
+      preview=Store.analyzeImport(pasted);
+      Main.render();
+      if(!preview.ok) UI.toast(preview.error,true);
+      else if(preview.warnings.length) UI.toast('可以匯入，但有需要注意的地方');
+      else UI.toast('檢查通過，共 '+preview.total+' 筆');
+    };
+    el.querySelector('[data-act="clear-paste"]').onclick=function(){
+      pasted=''; preview=null; Main.render();
+    };
+    const doMerge=el.querySelector('[data-act="do-merge"]');
+    if(doMerge) doMerge.onclick=function(){ runPaste('merge'); };
+    const doReplace=el.querySelector('[data-act="do-replace"]');
+    if(doReplace) doReplace.onclick=function(){
+      UI.confirm('覆蓋匯入',
+        '會把現在所有的客戶、專案、收款、經驗全部換成這段 JSON 的內容，原本的資料會不見。'+
+        '建議先「匯出 JSON 備份」。確定要覆蓋嗎？',
+        function(){ runPaste('replace'); },'確定覆蓋');
+    };
+
     el.querySelector('[data-act="export"]').onclick=function(){
       U.download('merito-backup-'+U.today()+'.json',Store.exportJSON());
     };
@@ -180,6 +253,17 @@ const ViewSettings = (function(){
         location.reload();
       },'確定清空');
     };
+  }
+
+  function runPaste(mode){
+    try{
+      Store.importJSON(pasted,mode);
+      pasted=''; preview=null;
+      UI.toast(mode==='replace'?'已覆蓋匯入':'已合併匯入');
+      Main.render();
+    }catch(e){
+      UI.toast('匯入失敗：'+e.message,true);
+    }
   }
 
   return {render:render};
