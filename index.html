@@ -3,151 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Merito — 客戶評估系統</title>
-<style>
-:root{
-  --ink:#1a1c1e;        /* 主文字 深墨 */
-  --ink-soft:#54595f;   /* 次文字 */
-  --paper:#f0ebe1;      /* 紙底 暖灰 */
-  --card:#fbf8f2;       /* 卡片底 */
-  --line:#d8d0c2;       /* 分隔線 */
-  --seal:#9c3b2e;       /* 印章紅 */
-  --seal-soft:#c4614f;
-  --gold:#8a6d1f;       /* 金 */
-  --green:#3f6b4a;      /* 通過綠 */
-  --amber:#9a7218;      /* 警示琥珀 */
-  --red:#9c3b2e;        /* 拒絕紅 */
-  --ok-bg:#e4ecdf;
-  --amber-bg:#f2e9d2;
-  --red-bg:#f2dcd7;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%}
-body{
-  font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Songti TC","Noto Serif TC",Georgia,serif;
-  background:var(--paper);
-  color:var(--ink);
-  line-height:1.6;
-  padding:0 0 80px;
-}
-.wrap{max-width:940px;margin:0 auto;padding:0 20px}
-
-/* ── 頁首 ── */
-header{
-  border-bottom:2px solid var(--ink);
-  padding:34px 0 20px;
-  margin-bottom:8px;
-}
-.masthead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.brand{font-size:44px;letter-spacing:2px;font-weight:600}
-.brand .dot{color:var(--seal)}
-.tagline{font-size:13px;color:var(--ink-soft);letter-spacing:3px;text-transform:uppercase;font-family:ui-monospace,"SF Mono",Menlo,monospace}
-.sub{font-size:13.5px;color:var(--ink-soft);margin-top:6px;font-style:italic}
-
-/* ── 分頁 ── */
-nav.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin:22px 0 28px}
-nav.tabs button{
-  font-family:inherit;font-size:15px;color:var(--ink-soft);
-  background:none;border:none;padding:12px 20px;cursor:pointer;
-  border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.5px;
-}
-nav.tabs button .n{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--gold);margin-right:7px}
-nav.tabs button:hover{color:var(--ink)}
-nav.tabs button.on{color:var(--ink);border-bottom-color:var(--seal);font-weight:600}
-
-.view{display:none}
-.view.on{display:block;animation:fade .3s ease}
-@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-
-h2.sect{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);
-  font-family:ui-monospace,Menlo,monospace;margin:0 0 4px}
-p.lead{font-size:15px;color:var(--ink-soft);margin-bottom:24px;max-width:640px}
-
-/* ── 評估表 ── */
-.assess-grid{display:grid;grid-template-columns:1fr;gap:0;border:1px solid var(--line);background:var(--card);border-radius:2px;overflow:hidden}
-.crit{padding:16px 20px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:12px 16px;align-items:center}
-.crit:last-child{border-bottom:none}
-.crit .q{font-size:15.5px}
-.crit .hint{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-top:2px;grid-column:1/-1;order:3}
-.scale{display:flex;gap:6px;order:2}
-.scale button{
-  width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:50%;
-  font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .12s;
-}
-.scale button:hover{border-color:var(--ink-soft)}
-.scale button.sel{background:var(--ink);color:var(--card);border-color:var(--ink);font-weight:600}
-.scale.rev button.sel{background:var(--seal);border-color:var(--seal);color:#fff}
-
-/* 分數面板 */
-.verdict{margin-top:24px;border:2px solid var(--ink);background:var(--card);border-radius:2px;padding:24px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
-.score-badge{text-align:center;padding:8px 22px;border-right:1px solid var(--line)}
-.score-num{font-size:54px;line-height:1;font-weight:600;font-variant-numeric:tabular-nums}
-.score-max{font-size:14px;color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace}
-.verdict-body .label{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:ui-monospace,Menlo,monospace;padding:3px 10px;border-radius:2px;display:inline-block;margin-bottom:8px}
-.label.go{background:var(--ok-bg);color:var(--green)}
-.label.caution{background:var(--amber-bg);color:var(--amber)}
-.label.avoid{background:var(--red-bg);color:var(--red)}
-.verdict-body h3{font-size:22px;margin-bottom:4px}
-.verdict-body p{font-size:14px;color:var(--ink-soft)}
-.flags{margin-top:14px;font-size:13px}
-.flags .flag{color:var(--seal);margin-bottom:3px}
-.flags .flag::before{content:"▲ ";font-size:10px;vertical-align:1px}
-
-.save-row{display:flex;gap:12px;margin-top:20px;align-items:center;flex-wrap:wrap}
-input.cname{font-family:inherit;font-size:16px;padding:10px 14px;border:1px solid var(--line);border-radius:2px;background:#fff;flex:1;min-width:200px}
-input.cname:focus{outline:none;border-color:var(--ink)}
-button.act{font-family:inherit;font-size:15px;padding:10px 22px;background:var(--ink);color:var(--card);border:none;border-radius:2px;cursor:pointer;letter-spacing:.5px}
-button.act:hover{background:#000}
-button.ghost{background:none;color:var(--ink-soft);border:1px solid var(--line)}
-button.ghost:hover{color:var(--ink);border-color:var(--ink-soft)}
-
-/* ── 追蹤表 ── */
-.track-add,.lesson-add{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:20px;margin-bottom:24px}
-.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
-.field label{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace;margin-bottom:4px}
-.field input,.field select,.field textarea{width:100%;font-family:inherit;font-size:14.5px;padding:8px 12px;border:1px solid var(--line);border-radius:2px;background:#fff;color:var(--ink)}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--ink)}
-.field textarea{resize:vertical;min-height:60px;line-height:1.5}
-
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:2px;overflow:hidden;font-size:14px}
-th{text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600}
-td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#fff}
-.pill{display:inline-block;font-size:11px;font-family:ui-monospace,Menlo,monospace;padding:2px 9px;border-radius:2px;letter-spacing:.5px}
-.pill.dev{background:#e6e0d2;color:var(--ink-soft)}
-.pill.uat{background:var(--amber-bg);color:var(--amber)}
-.pill.close{background:var(--ok-bg);color:var(--green)}
-.pill.maint{background:#e0e6ec;color:#3a5464}
-.loss-pos{color:var(--green);font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace}
-.loss-neg{color:var(--seal);font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace}
-.tdel{color:var(--ink-soft);cursor:pointer;font-size:12px;border:none;background:none;font-family:inherit}
-.tdel:hover{color:var(--seal)}
-
-/* ── 經驗卡 ── */
-.lessons{display:grid;grid-template-columns:1fr;gap:16px}
-.lesson{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--seal);border-radius:2px;padding:18px 20px;position:relative}
-.lesson h4{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
-.lesson .ctype{font-size:11px;font-family:ui-monospace,Menlo,monospace;color:var(--seal);letter-spacing:1px;text-transform:uppercase}
-.lesson .block{margin-top:10px}
-.lesson .block .bl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace}
-.lesson .block .bt{font-size:14.5px;margin-top:2px}
-.lesson .ldel{position:absolute;top:16px;right:16px}
-
-.empty{text-align:center;color:var(--ink-soft);font-style:italic;padding:40px 20px;border:1px dashed var(--line);border-radius:2px;font-size:14px}
-
-footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-soft);text-align:center;font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
-
-@media(max-width:620px){
-  .brand{font-size:34px}
-  .verdict{grid-template-columns:1fr}
-  .score-badge{border-right:none;border-bottom:1px solid var(--line);padding-bottom:16px}
-  nav.tabs button{padding:10px 12px;font-size:14px}
-  nav.tabs button .n{display:none}
-  .crit{grid-template-columns:1fr}
-  .scale{order:2}
-}
-</style>
+<title>Merito — 客戶管理系統</title>
+<link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <div class="wrap">
@@ -155,317 +12,56 @@ footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-si
 <header>
   <div class="masthead">
     <div class="brand">Merit<span class="dot">o</span></div>
-    <div class="tagline">Client Evaluation</div>
+    <div class="head-right">
+      <div class="tagline">Client Management</div>
+      <div class="sync-chip" id="syncChip" title="點擊同步">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">未設定同步</span>
+      </div>
+    </div>
   </div>
   <div class="sub">Know their merit before you commit — 值不值得接，先看 Merito。</div>
 </header>
 
-<nav class="tabs">
-  <button class="on" data-v="assess"><span class="n">01</span>接案評估</button>
-  <button data-v="track"><span class="n">02</span>客戶追蹤</button>
-  <button data-v="lesson"><span class="n">03</span>經驗記錄</button>
+<nav class="tabs" id="tabs">
+  <button data-v="dashboard" class="on"><span class="n">00</span>儀表板</button>
+  <button data-v="clients"><span class="n">01</span>客戶</button>
+  <button data-v="assess"><span class="n">02</span>接案評估</button>
+  <button data-v="projects"><span class="n">03</span>專案追蹤</button>
+  <button data-v="finance"><span class="n">04</span>報價收款</button>
+  <button data-v="lessons"><span class="n">05</span>經驗記錄</button>
+  <button data-v="settings"><span class="n">06</span>設定</button>
 </nav>
 
-<!-- ══════ 01 接案評估 ══════ -->
-<section class="view on" id="assess">
-  <h2 class="sect">Pre-engagement Assessment</h2>
-  <p class="lead">接案前，逐項評分（1 = 差／高風險，5 = 好）。系統即時算出 Merito 分數與建議，並標出伸手牌警訊。</p>
+<section class="view on" id="v-dashboard"></section>
+<section class="view" id="v-clients"></section>
+<section class="view" id="v-assess"></section>
+<section class="view" id="v-projects"></section>
+<section class="view" id="v-finance"></section>
+<section class="view" id="v-lessons"></section>
+<section class="view" id="v-settings"></section>
 
-  <div class="assess-grid" id="critGrid"></div>
-
-  <div class="verdict">
-    <div class="score-badge">
-      <div class="score-num" id="scoreNum">—</div>
-      <div class="score-max">/ 35</div>
-    </div>
-    <div class="verdict-body">
-      <span class="label" id="vLabel">尚未評分</span>
-      <h3 id="vTitle">開始逐項評分</h3>
-      <p id="vDesc">每一項都是接案前的真實提問。誠實打分，比事後後悔便宜。</p>
-      <div class="flags" id="flags"></div>
-    </div>
-  </div>
-
-  <div class="save-row">
-    <input class="cname" id="assessName" placeholder="客戶／專案名稱">
-    <button class="act" id="saveAssess">存入客戶追蹤</button>
-    <button class="act ghost" id="resetAssess">重新評分</button>
-  </div>
-</section>
-
-<!-- ══════ 02 客戶追蹤 ══════ -->
-<section class="view" id="track">
-  <h2 class="sect">Client Tracker</h2>
-  <p class="lead">追蹤現有客戶的合約、投入與損益。損益為負代表虧本，一眼看出哪些案子在燒錢。</p>
-
-  <div class="track-add">
-    <div class="field-row">
-      <div class="field"><label>客戶／專案</label><input id="t_name" placeholder="例：讚美之泉"></div>
-      <div class="field"><label>合約金額</label><input id="t_amount" type="number" placeholder="120000"></div>
-      <div class="field"><label>已投入工時</label><input id="t_hours" type="number" placeholder="1133.5"></div>
-      <div class="field"><label>時薪成本</label><input id="t_rate" type="number" placeholder="500"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>階段</label>
-        <select id="t_stage">
-          <option value="dev">開發中</option>
-          <option value="uat">驗收</option>
-          <option value="close">收尾</option>
-          <option value="maint">維護</option>
-        </select>
-      </div>
-      <div class="field"><label>待報價／風險註記</label><input id="t_note" placeholder="例：要 code 想接手；新需求待報價"></div>
-    </div>
-    <button class="act" id="addTrack">新增客戶</button>
-  </div>
-
-  <table id="trackTable">
-    <thead><tr><th>客戶</th><th>合約</th><th>投入成本</th><th>損益</th><th>階段</th><th>註記</th><th></th></tr></thead>
-    <tbody id="trackBody"></tbody>
-  </table>
-  <div class="empty" id="trackEmpty">尚無客戶記錄。可在上方新增，或從「接案評估」存入。</div>
-</section>
-
-<!-- ══════ 03 經驗記錄 ══════ -->
-<section class="view" id="lesson">
-  <h2 class="sect">Lessons Archive</h2>
-  <p class="lead">每個客戶踩過的雷、換來的教訓。下次遇到同類型，先翻這裡。</p>
-
-  <div class="lesson-add">
-    <div class="field-row">
-      <div class="field"><label>客戶名</label><input id="l_name" placeholder="例：讚美之泉"></div>
-      <div class="field"><label>客戶類型</label>
-        <select id="l_type">
-          <option>伸手牌（只索取不給予）</option>
-          <option>難搞高付費</option>
-          <option>互惠好客戶</option>
-          <option>低預算好配合</option>
-          <option>需求反覆型</option>
-          <option>想學走／換團隊型</option>
-        </select>
-      </div>
-    </div>
-    <div class="field"><label>踩到的雷</label><textarea id="l_trap" placeholder="例：需求驗收後持續追加、免費幫忙被視為理所當然、想拿完整程式碼自己接手"></textarea></div>
-    <div class="field" style="margin-top:12px"><label>學到的教訓／下次怎麼辦</label><textarea id="l_lesson" placeholder="例：開案前寫需求變更條款；商務界線一開始就交業務；客戶有工程能力考慮只出 UI"></textarea></div>
-    <button class="act" id="addLesson" style="margin-top:14px">存入經驗</button>
-  </div>
-
-  <div class="lessons" id="lessonList"></div>
-  <div class="empty" id="lessonEmpty">尚無經驗記錄。把這次的痛，變成下次的判斷力。</div>
-</section>
-
-<footer>MERITO · 資料儲存於本機瀏覽器 · 換裝置不同步，重要資料請另存</footer>
+<footer>
+  MERITO · <span id="footStat">—</span> · 資料同步至 GitHub，未設定時僅存於本機瀏覽器
+</footer>
 
 </div>
 
-<script>
-/* ═══════ 評估題庫 ═══════
-   rev:true 代表「選越低分越危險」用紅色；一般用黑色。
-   每題滿分 5。flag 為選 1-2 分時觸發的警訊文字。 */
-const CRITERIA=[
-  {q:"預算 vs 工作量是否成比例？",hint:"低價想做大量 = 從一開始就注定虧",flag:"預算與工作量不成比例"},
-  {q:"需求清晰度",hint:"需求模糊、「做了再說」= 未來會無限膨脹",flag:"需求模糊，易膨脹"},
-  {q:"是否為第一次外包（沒換過團隊）？",hint:"換過開發團隊 = 難搞前科",flag:"曾換過團隊，高風險"},
-  {q:"決策鏈是否穩定？",hint:"窗口不能拍板、老闆愛事後改 = 需求反覆",flag:"決策鏈不穩，需求會反覆"},
-  {q:"新需求的付費意願",hint:"想凹免費、「幫忙一下」= 成本吃不完",flag:"付費意願低，易凹免費"},
-  {q:"溝通態度是否互惠？",hint:"只索取、不感謝、不尊重 = 伸手牌",flag:"伸手牌傾向：只索取不給予"},
-  {q:"客戶端工程能力（對我方風險）",hint:"客戶自己有工程能力，可能學走／自己接手",flag:"客戶有工程能力，留意被取代",invert:true},
-];
-/* invert:true 的題 → 客戶工程能力「越強對我方越risky」，
-   但為統一「5分=好、1分=差」，這題請使用者以「合作安全度」評分：
-   5=單純委託無風險，1=有能力恐自行接手。 */
+<div class="modal-back" id="modalBack" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
 
-const LS={
-  assess:'merito_assess_v1',
-  track:'merito_track_v1',
-  lesson:'merito_lesson_v1'
-};
-let scores=new Array(CRITERIA.length).fill(0);
-let track=[], lessons=[];
-
-/* ---- 讀取 ---- */
-try{track=JSON.parse(localStorage.getItem(LS.track))||[]}catch(e){track=[]}
-try{lessons=JSON.parse(localStorage.getItem(LS.lesson))||[]}catch(e){lessons=[]}
-
-/* ═══ 分頁切換 ═══ */
-document.querySelectorAll('nav.tabs button').forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('on'));
-    document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');
-    document.getElementById(b.dataset.v).classList.add('on');
-  };
-});
-
-/* ═══ 01 評估：建題 ═══ */
-const grid=document.getElementById('critGrid');
-CRITERIA.forEach((c,i)=>{
-  const row=document.createElement('div');row.className='crit';
-  const q=document.createElement('div');q.className='q';q.textContent=c.q;
-  const scale=document.createElement('div');scale.className='scale rev';
-  for(let s=1;s<=5;s++){
-    const btn=document.createElement('button');btn.textContent=s;
-    btn.onclick=()=>{
-      scores[i]=s;
-      scale.querySelectorAll('button').forEach(x=>x.classList.remove('sel'));
-      btn.classList.add('sel');
-      renderVerdict();
-    };
-    scale.appendChild(btn);
-  }
-  const hint=document.createElement('div');hint.className='hint';hint.textContent=c.hint;
-  row.appendChild(q);row.appendChild(scale);row.appendChild(hint);
-  grid.appendChild(row);
-});
-
-function renderVerdict(){
-  const answered=scores.filter(s=>s>0).length;
-  const total=scores.reduce((a,b)=>a+b,0);
-  const max=CRITERIA.length*5;
-  document.getElementById('scoreNum').textContent = answered? total : '—';
-
-  const lbl=document.getElementById('vLabel');
-  const tit=document.getElementById('vTitle');
-  const desc=document.getElementById('vDesc');
-  const flagBox=document.getElementById('flags');
-
-  // 警訊
-  flagBox.innerHTML='';
-  scores.forEach((s,i)=>{
-    if(s>0 && s<=2){
-      const f=document.createElement('div');f.className='flag';f.textContent=CRITERIA[i].flag;
-      flagBox.appendChild(f);
-    }
-  });
-
-  if(answered<CRITERIA.length){
-    lbl.className='label';lbl.textContent=`已評 ${answered}/${CRITERIA.length}`;
-    tit.textContent='繼續評分';
-    desc.textContent='全部評完後給出建議。';
-    return;
-  }
-  // 全部評完 → 判定（滿分35）
-  if(total>=27){
-    lbl.className='label go';lbl.textContent='Go · 值得接';
-    tit.textContent='這是個好客戶';
-    desc.textContent='互惠、需求清楚、付費合理。可正常承接。';
-  }else if(total>=18){
-    lbl.className='label caution';lbl.textContent='Caution · 謹慎';
-    tit.textContent='可接，但要設好界線';
-    desc.textContent='有幾個警訊。建議：合約寫需求變更條款、提高報價、商務由業務把關。';
-  }else{
-    lbl.className='label avoid';lbl.textContent='Avoid · 高風險';
-    tit.textContent='伸手牌警報';
-    desc.textContent='多項紅旗。若非接不可，務必大幅提高報價、白紙黑字鎖範圍，並讓業務主導商務。';
-  }
-}
-renderVerdict();
-
-document.getElementById('resetAssess').onclick=()=>{
-  scores=new Array(CRITERIA.length).fill(0);
-  document.querySelectorAll('#critGrid .scale button').forEach(b=>b.classList.remove('sel'));
-  document.getElementById('assessName').value='';
-  renderVerdict();
-};
-
-document.getElementById('saveAssess').onclick=()=>{
-  const name=document.getElementById('assessName').value.trim();
-  if(!name){document.getElementById('assessName').focus();return;}
-  if(scores.filter(s=>s>0).length<CRITERIA.length){alert('請先完成所有評分項目');return;}
-  const total=scores.reduce((a,b)=>a+b,0);
-  let verdict = total>=27?'Go 值得接' : total>=18?'Caution 謹慎' : 'Avoid 高風險';
-  track.unshift({name,amount:'',hours:'',rate:'',stage:'dev',note:`評估：${total}/35（${verdict}）`});
-  saveTrack();renderTrack();
-  document.querySelector('nav.tabs button[data-v="track"]').click();
-  document.getElementById('resetAssess').click();
-};
-
-/* ═══ 02 追蹤 ═══ */
-function saveTrack(){try{localStorage.setItem(LS.track,JSON.stringify(track))}catch(e){}}
-const stageMap={dev:['開發中','dev'],uat:['驗收','uat'],close:['收尾','close'],maint:['維護','maint']};
-
-function renderTrack(){
-  const body=document.getElementById('trackBody');
-  const tbl=document.getElementById('trackTable');
-  const emp=document.getElementById('trackEmpty');
-  body.innerHTML='';
-  if(track.length===0){tbl.style.display='none';emp.style.display='block';return;}
-  tbl.style.display='';emp.style.display='none';
-  track.forEach((t,i)=>{
-    const amount=parseFloat(t.amount)||0;
-    const cost=(parseFloat(t.hours)||0)*(parseFloat(t.rate)||0);
-    let lossCell='—';
-    if(amount>0 && cost>0){
-      const pct=Math.round((amount-cost)/amount*100);
-      lossCell=`<span class="${pct<0?'loss-neg':'loss-pos'}">${pct>0?'+':''}${pct}%</span>`;
-    }
-    const costStr = cost>0? cost.toLocaleString() : '—';
-    const amtStr = amount>0? amount.toLocaleString() : '—';
-    const st=stageMap[t.stage]||stageMap.dev;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td><strong>${esc(t.name)}</strong></td>
-      <td>${amtStr}</td>
-      <td>${costStr}</td>
-      <td>${lossCell}</td>
-      <td><span class="pill ${st[1]}">${st[0]}</span></td>
-      <td style="color:var(--ink-soft);font-size:13px">${esc(t.note||'')}</td>
-      <td><button class="tdel" data-i="${i}">刪除</button></td>`;
-    body.appendChild(tr);
-  });
-  body.querySelectorAll('.tdel').forEach(b=>b.onclick=()=>{track.splice(+b.dataset.i,1);saveTrack();renderTrack();});
-}
-document.getElementById('addTrack').onclick=()=>{
-  const name=document.getElementById('t_name').value.trim();
-  if(!name){document.getElementById('t_name').focus();return;}
-  track.unshift({
-    name,
-    amount:document.getElementById('t_amount').value,
-    hours:document.getElementById('t_hours').value,
-    rate:document.getElementById('t_rate').value,
-    stage:document.getElementById('t_stage').value,
-    note:document.getElementById('t_note').value.trim()
-  });
-  ['t_name','t_amount','t_hours','t_rate','t_note'].forEach(id=>document.getElementById(id).value='');
-  saveTrack();renderTrack();
-};
-renderTrack();
-
-/* ═══ 03 經驗 ═══ */
-function saveLesson(){try{localStorage.setItem(LS.lesson,JSON.stringify(lessons))}catch(e){}}
-function renderLesson(){
-  const list=document.getElementById('lessonList');
-  const emp=document.getElementById('lessonEmpty');
-  list.innerHTML='';
-  if(lessons.length===0){emp.style.display='block';return;}
-  emp.style.display='none';
-  lessons.forEach((l,i)=>{
-    const card=document.createElement('div');card.className='lesson';
-    card.innerHTML=`
-      <button class="tdel ldel" data-i="${i}">刪除</button>
-      <h4>${esc(l.name)}</h4>
-      <div class="ctype">${esc(l.type)}</div>
-      <div class="block"><div class="bl">踩到的雷</div><div class="bt">${esc(l.trap)||'—'}</div></div>
-      <div class="block"><div class="bl">教訓／下次怎麼辦</div><div class="bt">${esc(l.lesson)||'—'}</div></div>`;
-    list.appendChild(card);
-  });
-  list.querySelectorAll('.ldel').forEach(b=>b.onclick=()=>{lessons.splice(+b.dataset.i,1);saveLesson();renderLesson();});
-}
-document.getElementById('addLesson').onclick=()=>{
-  const name=document.getElementById('l_name').value.trim();
-  if(!name){document.getElementById('l_name').focus();return;}
-  lessons.unshift({
-    name,
-    type:document.getElementById('l_type').value,
-    trap:document.getElementById('l_trap').value.trim(),
-    lesson:document.getElementById('l_lesson').value.trim()
-  });
-  ['l_name','l_trap','l_lesson'].forEach(id=>document.getElementById(id).value='');
-  saveLesson();renderLesson();
-};
-renderLesson();
-
-function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-</script>
+<script src="js/util.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/views/dashboard.js"></script>
+<script src="js/views/clients.js"></script>
+<script src="js/views/assess.js"></script>
+<script src="js/views/projects.js"></script>
+<script src="js/views/finance.js"></script>
+<script src="js/views/lessons.js"></script>
+<script src="js/views/settings.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
