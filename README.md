@@ -71,6 +71,14 @@
 
 ---
 
+## 用 AI 把對話紀錄轉成資料
+
+LINE／Slack／Email 的對話紀錄可以丟給 AI，請它輸出 Merito 格式的 JSON，
+再用「設定 → 備份與轉移 → 匯入（合併）」載入 —— 不用一筆一筆手打。
+完整的欄位規格與可直接複製的提示詞在 **[docs/ai-import.md](docs/ai-import.md)**。
+
+---
+
 ## 部署
 
 ### GitHub Pages
