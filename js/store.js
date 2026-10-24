@@ -147,6 +147,8 @@ const Store = (function(){
     return list('clients').find(function(c){ return c.name===n; })||null;
   }
   function clientName(id){
+    /* 沒填客戶（例如跟內部分工有關的經驗記錄）和客戶被刪掉是兩回事，別都顯示成「已刪除」 */
+    if(!id) return '（未指定客戶）';
     const c=get('clients',id);
     return c? c.name : '（已刪除的客戶）';
   }
