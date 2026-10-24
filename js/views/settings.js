@@ -172,20 +172,25 @@ const ViewSettings = (function(){
         token:el.querySelector('#sToken').value.trim()
       });
       if(!Store.syncConfigured()){ UI.toast('owner、repo、path、token 都要填',true); return; }
+      /* 這裡都用 Main.render() 強制重畫，不能只 Store.emit()：
+         emit 只在「資料有變」時才重畫，但 repo 是否私人、最後同步時間、錯誤訊息
+         都不算資料。只 emit 的話，「這個 repo 是 public」的紅色警告不會出現。 */
       Store.pull().then(function(){
         UI.toast('連線成功，已載入遠端資料');
         return Store.checkRepoVisibility();
       }).then(function(priv){
         if(priv===false) UI.toast('注意：這個 repo 是 public，客戶資料會被公開',true);
-        Store.emit();
-      }).catch(function(err){ UI.toast(err.message,true); Store.emit(); });
+        Main.render();
+      }).catch(function(err){ UI.toast(err.message,true); Main.render(); });
     };
 
     el.querySelector('[data-act="pull"]').onclick=function(){
-      Store.pull().then(function(){ UI.toast('已從 GitHub 拉取並合併'); Store.emit(); })
-        .catch(function(err){ UI.toast(err.message,true); });
+      Store.pull().then(function(){ UI.toast('已從 GitHub 拉取並合併'); Main.render(); })
+        .catch(function(err){ UI.toast(err.message,true); Main.render(); });
     };
-    el.querySelector('[data-act="push"]').onclick=function(){ Store.sync(); };
+    el.querySelector('[data-act="push"]').onclick=function(){
+      Store.sync().then(Main.render,Main.render);
+    };
     el.querySelector('[data-act="clear-token"]').onclick=function(){
       Store.setCfg({token:''});
       UI.toast('已清除 token，資料仍留在本機');
